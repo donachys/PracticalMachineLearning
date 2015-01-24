@@ -1,0 +1,76 @@
+---
+title: "Barbell Weight Lifting Performance Quality Using Motion Sensors"
+author: "donachys"
+date: "January 23, 2015"
+output: html_document
+---
+
+##Synopsis
+
+This project is intended to use data captured from different wearable sensors to predict the quality of a barbell weight lifting exercise. Sensors were placed on the Belt, Arm, Wrist, and Barbell of participants. Measurements were taken while the participant performed a correct exercise, class A, and exercises performed with common mistakes, noted as classes B through E. It is desirable if based on the sensor measurements it is possible to determine if the exercise was performed correctly automatically. We will use a bit of pre-processing to choose features, and a KNN (K-Nearest Neighbor) machine learning algorithm to build a model capable of making predictions about new data examples.
+
+Note: It is assumed that the data for this analysis found at https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv and https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv are in the current working directory.
+
+##Data Preparation
+
+Read the data into R as a data frame, and remove missing feature columns, and the rows with summary statistics (these rows are marked with new_window = yes in the data set). Also remove features which should not be built into the model, participant name, time stamps, example number.
+```{r, cache=TRUE}
+train <- read.csv("pml-training.csv")
+test <- read.csv("pml-testing.csv")
+
+train <- train[train$new_window == "no",]
+
+train <- train[,-1:-7]
+train <- train[,-5:-29]
+train <- train[,-18:-27]
+train <- train[,-27:-41]
+train <- train[,-30:-44]
+train <- train[,-31:-40]
+train <- train[,-43:-57]
+train <- train[,-44:-53]
+
+test <- test[,-1:-7]
+test <- test[,-5:-29]
+test <- test[,-18:-27]
+test <- test[,-27:-41]
+test <- test[,-30:-44]
+test <- test[,-31:-40]
+test <- test[,-43:-57]
+test <- test[,-44:-53]
+```
+
+##Building a model
+Now that we have the data, and it is cleaned up a bit we can train a KNN classifier. We specify a cross validation to be used, with the default 10-fold.
+
+```{r, cache=TRUE}
+library(caret)
+knnFit <- train(classe ~ ., data=train, method = "knn", trControl=trainControl(method = "cv"))
+
+```
+
+##Results
+
+```{r}
+knnFit
+```
+
+We can see that k=5 has the best accuracy of 0.9296, so the out of sample error estimate is 0.0704.
+
+Additional information about the final model
+```{r}
+
+knnFit$finalModel
+
+```
+
+We make predictions on the test set (20/20 correct 100% accuracy).
+
+```{r, cache=TRUE}
+
+predictions <- predict(knnFit, newdata=test)
+
+```
+
+##Conclusion
+
+It is very feasible to produce a model which can accurately determine if a barbell weightlifting exercise is being performed properly with an array of sensors. In this case a KNN classifier trained relatively quickly and produced good results. This work indicates that products to assess the qualitative performance of a weightlifter may soon become a reality.
